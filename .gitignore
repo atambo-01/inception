@@ -1,0 +1,34 @@
+# ==========================================
+# 42 Inception Gitignore
+# ==========================================
+
+# 0. Costum extension .ign
+.ign
+*.ign
+
+# 1. Critical Security (NEVER commit secrets)
+.env
+*.env
+secrets/
+*.key
+*.crt
+*.pem
+
+# 2. Local Docker Data (Prevents tracking database/wp files on your host)
+# If you mount local folders for volumes (e.g., /home/username/data)
+data/
+wp-files/
+db-data/
+
+# 3. System and OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# 4. Dev Tools / Containers Extension Cache
+.vscode/
+.idea/
+.containers/
+.docker/
