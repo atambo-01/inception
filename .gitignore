@@ -2,6 +2,9 @@
 # 42 Inception Gitignore
 # ==========================================
 
+PROJECT_CONTEXT.md
+ *PROJECT_CONTEXT.md
+
 # 0. Costum extension .ign
 .ign
 *.ign
