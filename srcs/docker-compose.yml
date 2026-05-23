@@ -12,8 +12,34 @@ services:
       - inception
     restart: unless-stopped
 
+  wordpress:
+    build:
+      context: ./requirements/wordpress
+    container_name: wordpress
+    image: inception-wordpress
+    depends_on:
+      - mariadb
+    env_file:
+      - ../.env
+    volumes:
+      - wordpress_data:/var/www/wordpress
+    networks:
+      - inception
+    restart: unless-stopped
+
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/${USER}/data/mariadb'
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/${USER}/data/wordpress'
 
 networks:
   inception:
