@@ -3,8 +3,14 @@ set -eu
 
 # Wait for MariaDB to be ready
 # We use mariadb-client to check the connection
-until mariadb -h mariadb -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" -e "SELECT 1;" > /dev/null 2>&1; do
-    echo "Waiting for MariaDB..."
+count=0
+until mysqladmin ping -h mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent; do
+    count=$((count+1))
+    if [ $count -gt 5 ]; then
+        echo "Error: Could not connect to MariaDB after 5 attempts."
+        exit 1
+    fi
+    echo "Waiting for MariaDB... (attempt $count/5)"
     sleep 2
 done
 

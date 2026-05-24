@@ -1,4 +1,19 @@
 services:
+  nginx:
+    build:
+      context: ./requirements/nginx
+    container_name: nginx
+    image: inception-nginx
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/wordpress
+    networks:
+      - inception
+    restart: unless-stopped
+
   mariadb:
     build:
       context: ./requirements/mariadb
@@ -11,14 +26,18 @@ services:
     networks:
       - inception
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   wordpress:
+    user: "${HOST_UID}:${HOST_GID}"
     build:
       context: ./requirements/wordpress
     container_name: wordpress
     image: inception-wordpress
-    depends_on:
-      - mariadb
     env_file:
       - ../.env
     volumes:
@@ -26,6 +45,9 @@ services:
     networks:
       - inception
     restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
 
 volumes:
   mariadb_data:
