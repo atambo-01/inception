@@ -12,7 +12,7 @@ PROJECT_CONTEXT.md
 # 1. Critical Security (NEVER commit secrets)
 .env
 *.env
-secrets/
+.secrets/
 *.key
 *.crt
 *.pem

@@ -1,9 +1,68 @@
 services:
+  mariadb:
+    build:
+      context: ./requirements/mariadb
+    image: inception-mariadb:1.0
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MARIADB_PASSWORD_FILE: /run/secrets/db_password
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+    secrets:
+      - db_root_password
+      - db_password
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - inception
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u wordpress -p$$(cat /run/secrets/db_password)"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  wordpress:
+    secrets:
+      - db_password
+      - wp_admin_password
+      - wp_user_password
+    environment:
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+      WORDPRESS_DB_HOST: mariadb:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      DOMAIN_NAME: atambo.42.fr
+      WP_ADMIN_USER: your_admin_login
+      WP_ADMIN_EMAIL: admin@example.com
+      WP_USER: your_normal_user
+      WP_USER_EMAIL: user@example.com
+      WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_password
+      WP_USER_PASSWORD_FILE: /run/secrets/wp_user_password          
+    build:
+      context: ./requirements/wordpress
+    image: inception-wordpress:1.0
+    volumes:
+      - wordpress_data:/var/www/wordpress
+    networks:
+      - inception
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+
   nginx:
     build:
       context: ./requirements/nginx
-    container_name: nginx
-    image: inception-nginx
+    image: inception-nginx:1.0
     depends_on:
       - wordpress
     ports:
@@ -13,55 +72,34 @@ services:
     networks:
       - inception
     restart: unless-stopped
-
-  mariadb:
-    build:
-      context: ./requirements/mariadb
-    container_name: mariadb
-    image: inception-mariadb
-    env_file:
-      - ../.env
-    volumes:
-      - mariadb_data:/var/lib/mysql
-    networks:
-      - inception
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u\"$${MYSQL_USER}\" -p\"$${MYSQL_PASSWORD}\""]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  wordpress:
-    build:
-      context: ./requirements/wordpress
-    container_name: wordpress
-    image: inception-wordpress
-    env_file:
-      - ../.env
-    volumes:
-      - wordpress_data:/var/www/wordpress
-    networks:
-      - inception
-    restart: unless-stopped
-    depends_on:
-      mariadb:
-        condition: service_healthy
+    deploy:
+      placement:
+        constraints: [node.role == manager]
 
 volumes:
   mariadb_data:
     driver: local
     driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/home/${USER}/data/mariadb'
+      type: none
+      o: bind
+      device: /home/atambo/data/mariadb
   wordpress_data:
     driver: local
     driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/home/${USER}/data/wordpress'
+      type: none
+      o: bind
+      device: /home/atambo/data/wordpress
 
 networks:
   inception:
-    driver: bridge
+    driver: overlay
+
+secrets:
+  db_root_password:
+    external: true
+  db_password:
+    external: true
+  wp_admin_password:
+    external: true
+  wp_user_password:
+    external: true

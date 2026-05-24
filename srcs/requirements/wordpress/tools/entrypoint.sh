@@ -1,6 +1,17 @@
 #!/bin/sh
 set -eu
 
+# Read secrets if _FILE variables are set
+if [ -n "${WORDPRESS_DB_PASSWORD_FILE:-}" ] && [ -f "$WORDPRESS_DB_PASSWORD_FILE" ]; then
+    export MYSQL_PASSWORD=$(cat "$WORDPRESS_DB_PASSWORD_FILE")
+fi
+if [ -n "${WP_ADMIN_PASSWORD_FILE:-}" ] && [ -f "$WP_ADMIN_PASSWORD_FILE" ]; then
+    export WP_ADMIN_PASSWORD=$(cat "$WP_ADMIN_PASSWORD_FILE")
+fi
+if [ -n "${WP_USER_PASSWORD_FILE:-}" ] && [ -f "$WP_USER_PASSWORD_FILE" ]; then
+    export WP_USER_PASSWORD=$(cat "$WP_USER_PASSWORD_FILE")
+fi
+
 # Wait for MariaDB to be ready
 # We use mariadb-client to check the connection
 count=0
