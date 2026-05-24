@@ -23,8 +23,9 @@ RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.ph
     -O /usr/local/bin/wp && \
     chmod +x /usr/local/bin/wp
 
-# Configure PHP-FPM to listen on port 9000 instead of local socket
-RUN sed -i 's/listen = 127.0.0.1:9000/listen = 9000/g' /etc/php83/php-fpm.d/www.conf
+# Configure PHP-FPM for container networking and non-root execution
+RUN sed -i 's/listen = 127.0.0.1:9000/listen = 9000/g' /etc/php83/php-fpm.d/www.conf && \
+    sed -i 's|;error_log = log/php83/error.log|error_log = /proc/self/fd/2|g' /etc/php83/php-fpm.conf
 
 # Set up the working directory for WordPress
 WORKDIR /var/www/wordpress
