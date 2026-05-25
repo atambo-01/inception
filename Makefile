@@ -2,6 +2,9 @@ NAME = inception
 SECRETS_DIR := $(HOME)/.inception_secrets
 SECRET_FILES := db_root_password.txt db_password.txt wp_admin_password.txt wp_user_password.txt
 
+# Default target
+.DEFAULT_GOAL := up
+
 # Colors
 COLOR_RESET   := \033[0m
 COLOR_RED     := \033[31m
