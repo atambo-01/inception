@@ -2,53 +2,113 @@ NAME = inception
 SECRETS_DIR := $(HOME)/.inception_secrets
 SECRET_FILES := db_root_password.txt db_password.txt wp_admin_password.txt wp_user_password.txt
 
-# Create secret files if they don't exist (prompt user)
+# Colors
+COLOR_RESET   := \033[0m
+COLOR_RED     := \033[31m
+COLOR_GREEN   := \033[32m
+COLOR_YELLOW  := \033[33m
+COLOR_MAGENTA := \033[35m
+COLOR_CYAN    := \033[36m
+
+# Create secret files
 secrets:
+	@printf "$(COLOR_CYAN)🔐 Setting up secrets...$(COLOR_RESET)\n"
 	@mkdir -p $(SECRETS_DIR)
 	@chmod 700 $(SECRETS_DIR)
 	@for file in $(SECRET_FILES); do \
 		if [ ! -f "$(SECRETS_DIR)/$$file" ]; then \
-			echo -n "Enter password for $$file: "; \
+			printf "$(COLOR_YELLOW)Creating secret file $$file...$(COLOR_RESET)\n"; \
+			printf "   Enter password for $$file: "; \
 			stty -echo; read pass; stty echo; echo; \
 			echo "$$pass" > "$(SECRETS_DIR)/$$file"; \
 			chmod 600 "$(SECRETS_DIR)/$$file"; \
-			echo "Created $(SECRETS_DIR)/$$file"; \
+			printf "$(COLOR_GREEN)   ✓ Created $(SECRETS_DIR)/$$file$(COLOR_RESET)\n"; \
 		else \
-			echo "Secret file $(SECRETS_DIR)/$$file already exists, skipping."; \
+			printf "$(COLOR_GREEN)   ✓ Secret file $(SECRETS_DIR)/$$file already exists.$(COLOR_RESET)\n"; \
 		fi; \
 	done
+	@printf "$(COLOR_GREEN)✓ All secrets ready.$(COLOR_RESET)\n"
 
-# Build images using docker compose
+# Build images
 build:
-	docker compose -f srcs/docker-compose.yml build
+	@printf "$(COLOR_CYAN)🏗️  Building Docker images...$(COLOR_RESET)\n"
+	@docker compose -f srcs/docker-compose.yml build
+	@if [ $$? -eq 0 ]; then \
+		printf "$(COLOR_GREEN)✓ Build succeeded.$(COLOR_RESET)\n"; \
+	else \
+		printf "$(COLOR_RED)✗ Build failed.$(COLOR_RESET)\n"; \
+		exit 1; \
+	fi
 
-# Start the stack (creates directories, secrets if missing, builds, then up)
+# Start stack
 up: secrets build
-	mkdir -p /home/atambo/data/mariadb /home/atambo/data/wordpress
-	docker compose -f srcs/docker-compose.yml up -d
+	@printf "$(COLOR_CYAN)🚀 Starting the stack...$(COLOR_RESET)\n"
+	@mkdir -p /home/atambo/data/mariadb /home/atambo/data/wordpress
+	@docker compose -f srcs/docker-compose.yml up -d
+	@if [ $$? -eq 0 ]; then \
+		printf "$(COLOR_GREEN)✓ Stack started.$(COLOR_RESET)\n"; \
+	else \
+		printf "$(COLOR_RED)✗ Start failed.$(COLOR_RESET)\n"; \
+		exit 1; \
+	fi
+	@printf "$(COLOR_CYAN)⏳ Waiting for containers...$(COLOR_RESET)\n"
+	@sleep 3
+	@$(MAKE) status
 
-# Stop containers but keep volumes
+# Stop
 down:
-	docker compose -f srcs/docker-compose.yml down
+	@printf "$(COLOR_CYAN)🛑 Stopping containers (keeping volumes)...$(COLOR_RESET)\n"
+	@docker compose -f srcs/docker-compose.yml down
+	@if [ $$? -eq 0 ]; then \
+		printf "$(COLOR_GREEN)✓ Stopped.$(COLOR_RESET)\n"; \
+	else \
+		printf "$(COLOR_RED)✗ Stop failed.$(COLOR_RESET)\n"; \
+	fi
 
-# Stop and remove containers, networks, volumes (Docker volumes only)
+# Clean (remove Docker volumes)
 clean: down
-	docker compose -f srcs/docker-compose.yml down -v
+	@printf "$(COLOR_CYAN)🧹 Removing Docker volumes...$(COLOR_RESET)\n"
+	@docker compose -f srcs/docker-compose.yml down -v
+	@if [ $$? -eq 0 ]; then \
+		printf "$(COLOR_GREEN)✓ Volumes removed.$(COLOR_RESET)\n"; \
+	else \
+		printf "$(COLOR_RED)✗ Volume removal failed.$(COLOR_RESET)\n"; \
+	fi
 
-# Full clean: remove containers, volumes, images, and host data, and secret files
+# Full cleanup
 fclean: clean
-	docker system prune -a --volumes --force
-	docker run --rm -v /home/atambo/data:/data alpine:3.19 rm -rf /data/mariadb /data/wordpress
-	rm -rf $(SECRETS_DIR)
+	@printf "$(COLOR_CYAN)🔥 Performing full system cleanup...$(COLOR_RESET)\n"
+	@docker system prune -a --volumes --force
+	@if [ $$? -eq 0 ]; then \
+		printf "$(COLOR_GREEN)✓ System pruned.$(COLOR_RESET)\n"; \
+	else \
+		printf "$(COLOR_RED)✗ Prune failed.$(COLOR_RESET)\n"; \
+	fi
+	@printf "$(COLOR_CYAN)🗑️  Cleaning host data directories...$(COLOR_RESET)\n"
+	@docker run --rm -v /home/atambo/data:/data alpine:3.19 sh -c "rm -rf /data/mariadb /data/wordpress && mkdir -p /data/mariadb /data/wordpress"
+	@printf "$(COLOR_CYAN)🔐 Removing local secret files...$(COLOR_RESET)\n"
+	@rm -rf $(SECRETS_DIR)
+	@printf "$(COLOR_GREEN)✓ Full cleanup complete.$(COLOR_RESET)\n"
+	@docker rmi -f alpine:3.19 2>/dev/null || true
 
-# Rebuild everything from scratch
+# Rebuild from scratch
 re: fclean up
 
 # Status
-ps:
-	docker compose -f srcs/docker-compose.yml ps
+status:
+	@echo
+	@printf "$(COLOR_MAGENTA)📊 Current stack status:$(COLOR_RESET)\n"
+	@docker compose -f srcs/docker-compose.yml ps
+	@echo
+	@if docker compose -f srcs/docker-compose.yml ps --quiet 2>/dev/null | grep -q .; then \
+		printf "$(COLOR_GREEN)🌟 All containers are running! Visit https://atambo.42.fr$(COLOR_RESET)\n"; \
+	else \
+		printf "$(COLOR_YELLOW)No containers running. Run 'make up'.$(COLOR_RESET)\n"; \
+	fi
 
+# Logs
 logs:
-	docker compose -f srcs/docker-compose.yml logs -f
+	@printf "$(COLOR_CYAN)📜 Following logs (Ctrl+C to stop)...$(COLOR_RESET)\n"
+	@docker compose -f srcs/docker-compose.yml logs -f
 
-.PHONY: secrets build up down clean fclean re ps logs
+.PHONY: secrets build up down clean fclean re status logs
