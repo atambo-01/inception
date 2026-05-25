@@ -1,78 +1,54 @@
 NAME = inception
 SECRETS_DIR := $(HOME)/.inception_secrets
+SECRET_FILES := db_root_password.txt db_password.txt wp_admin_password.txt wp_user_password.txt
 
-# List of required secrets (must match those used in docker-compose.yml)
-REQUIRED_SECRETS := db_root_password db_password wp_admin_password wp_user_password
-
-# Check if Docker Swarm is active
-check_swarm:
-	@state=$$(docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null); \
-	if [ "$$state" != "active" ]; then \
-		echo "ERROR: Docker Swarm mode is not active. Current state: $$state"; \
-		echo "Please run:  docker swarm init"; \
-		exit 1; \
-	fi
-
-# Check if all required secrets exist in Swarm
-check_secrets:
-	@missing=""; \
-	for secret in $(REQUIRED_SECRETS); do \
-		if ! docker secret ls --format "{{.Name}}" | grep -qx "$$secret"; then \
-			missing="$$missing $$secret"; \
-		fi; \
-	done; \
-	if [ -n "$$missing" ]; then \
-		echo "ERROR: Missing Docker secrets:$$missing"; \
-		echo "Please run:  make secrets"; \
-		exit 1; \
-	fi
-
-# Build images using standard compose
-build_images:
-	docker compose -f srcs/docker-compose.yml build
-
-# Deploy the stack – requires swarm active and all secrets present
-deploy: check_swarm check_secrets build_images
-	mkdir -p /home/atambo/data/mariadb /home/atambo/data/wordpress
-	docker stack deploy -c srcs/docker-compose.yml $(NAME)
-
-# Convenience targets
-all: deploy
-
-up: deploy
-
-down:
-	docker stack rm $(NAME)
-
-stop: down
-
-start: deploy
-
-# Clean everything: remove stack, prune volumes, delete data
-clean: down
-	docker system prune -a --volumes --force
-
-fclean: clean
-	docker run --rm -v /home/atambo/data:/data alpine:3.19 rm -rf /data/mariadb /data/wordpress
-
-re: fclean all
-
-# Create secrets interactively (idempotent, skips existing)
+# Create secret files if they don't exist (prompt user)
 secrets:
 	@mkdir -p $(SECRETS_DIR)
 	@chmod 700 $(SECRETS_DIR)
-	@for secret in $(REQUIRED_SECRETS); do \
-		if docker secret ls --format "{{.Name}}" | grep -qx "$$secret"; then \
-			echo "Secret $$secret already exists. Skipping."; \
-		else \
-			echo -n "Enter password for $$secret: "; \
+	@for file in $(SECRET_FILES); do \
+		if [ ! -f "$(SECRETS_DIR)/$$file" ]; then \
+			echo -n "Enter password for $$file: "; \
 			stty -echo; read pass; stty echo; echo; \
-			echo "$$pass" > $(SECRETS_DIR)/$$secret.txt; \
-			chmod 600 $(SECRETS_DIR)/$$secret.txt; \
-			docker secret create $$secret $(SECRETS_DIR)/$$secret.txt > /dev/null; \
-			echo "Created secret $$secret."; \
+			echo "$$pass" > "$(SECRETS_DIR)/$$file"; \
+			chmod 600 "$(SECRETS_DIR)/$$file"; \
+			echo "Created $(SECRETS_DIR)/$$file"; \
+		else \
+			echo "Secret file $(SECRETS_DIR)/$$file already exists, skipping."; \
 		fi; \
 	done
-	@echo "All required secrets are ready."
 
-.PHONY: all check_swarm check_secrets build_images deploy up down stop start clean fclean re secrets
+# Build images using docker compose
+build:
+	docker compose -f srcs/docker-compose.yml build
+
+# Start the stack (creates directories, secrets if missing, builds, then up)
+up: secrets build
+	mkdir -p /home/atambo/data/mariadb /home/atambo/data/wordpress
+	docker compose -f srcs/docker-compose.yml up -d
+
+# Stop containers but keep volumes
+down:
+	docker compose -f srcs/docker-compose.yml down
+
+# Stop and remove containers, networks, volumes (Docker volumes only)
+clean: down
+	docker compose -f srcs/docker-compose.yml down -v
+
+# Full clean: remove containers, volumes, images, and host data, and secret files
+fclean: clean
+	docker system prune -a --volumes --force
+	docker run --rm -v /home/atambo/data:/data alpine:3.19 rm -rf /data/mariadb /data/wordpress
+	rm -rf $(SECRETS_DIR)
+
+# Rebuild everything from scratch
+re: fclean up
+
+# Status
+ps:
+	docker compose -f srcs/docker-compose.yml ps
+
+logs:
+	docker compose -f srcs/docker-compose.yml logs -f
+
+.PHONY: secrets build up down clean fclean re ps logs

@@ -27,7 +27,7 @@ done
 
 if [ ! -f "wp-config.php" ]; then
     echo "Downloading WordPress..."
-    wp core download --allow-root
+    wp core download --allow-root --force   # --force overwrites existing files
 
     echo "Creating wp-config.php..."
     wp config create \
@@ -54,6 +54,8 @@ if [ ! -f "wp-config.php" ]; then
         --role=author \
         --user_pass="${WP_USER_PASSWORD}" \
         --allow-root
+else
+    echo "WordPress already configured. Skipping setup."
 fi
 
 echo "WordPress is ready."
