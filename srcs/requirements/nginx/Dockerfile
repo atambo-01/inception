@@ -1,4 +1,5 @@
-FROM alpine:3.19
+ARG ALPINE_VERSION
+FROM alpine:${ALPINE_VERSION}
 
 RUN apk update && apk upgrade && apk add --no-cache \
     nginx \

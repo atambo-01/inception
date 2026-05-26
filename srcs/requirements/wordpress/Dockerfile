@@ -1,4 +1,5 @@
-FROM alpine:3.19
+ARG ALPINE_VERSION
+FROM alpine:${ALPINE_VERSION}
 
 # Install dependencies
 RUN apk update && apk upgrade && apk add --no-cache \
@@ -9,13 +10,13 @@ RUN apk update && apk upgrade && apk add --no-cache \
     php83-mbstring \
     php83-openssl \
     php83-curl \
-    php83-json \
     php83-dom \
     php83-xml \
     php83-zip \
     wget \
     mariadb-client && \
-    ln -s /usr/bin/php83 /usr/bin/php && \
+    ln -sf /usr/bin/php83 /usr/bin/php && \
+    mkdir -p /etc/php83/conf.d && \
     echo "memory_limit=256M" > /etc/php83/conf.d/memory-limit.ini
 
 # Download and install WP-CLI (essential for automated setup)
