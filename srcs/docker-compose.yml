@@ -4,11 +4,10 @@ services:
     image: inception-mariadb:1.0
     container_name: mariadb
     restart: unless-stopped
+    env_file: ../.env
     environment:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MARIADB_PASSWORD_FILE: /run/secrets/db_password
-      MARIADB_DATABASE: wordpress
-      MARIADB_USER: wordpress
     secrets:
       - db_root_password
       - db_password
@@ -30,18 +29,9 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy   # optional, but safe
+    env_file: ../.env
     environment:
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
-      WORDPRESS_DB_HOST: mariadb:3306
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_NAME: wordpress
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: wordpress
-      DOMAIN_NAME: atambo.42.fr
-      WP_ADMIN_USER: your_admin_login        # change to your admin username
-      WP_ADMIN_EMAIL: admin@example.com
-      WP_USER: your_normal_user              # change to your normal user
-      WP_USER_EMAIL: user@example.com
       WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_password
       WP_USER_PASSWORD_FILE: /run/secrets/wp_user_password
     secrets:
@@ -87,10 +77,10 @@ networks:
 
 secrets:
   db_root_password:
-    file: ~/.inception_secrets/db_root_password.txt
+    file: $HOME/.inception_secrets/db_root_password.txt
   db_password:
-    file: ~/.inception_secrets/db_password.txt
+    file: $HOME/.inception_secrets/db_password.txt
   wp_admin_password:
-    file: ~/.inception_secrets/wp_admin_password.txt
+    file: $HOME/.inception_secrets/wp_admin_password.txt
   wp_user_password:
-    file: ~/.inception_secrets/wp_user_password.txt
+    file: $HOME/.inception_secrets/wp_user_password.txt
