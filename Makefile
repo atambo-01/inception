@@ -1,5 +1,5 @@
 NAME = inception
-.DEFAULT_GOAL := up
+.DEFAULT_GOAL := build
 
 # Colors
 COLOR_RESET   := \033[0m
@@ -21,7 +21,7 @@ build:
 	fi
 
 # Start stack
-up: build
+up:
 	@printf "$(COLOR_CYAN)🚀 Starting the stack...$(COLOR_RESET)\n"
 	@mkdir -p /home/atambo/data/mariadb /home/atambo/data/wordpress
 	@docker compose -f srcs/docker-compose.yml up -d
