@@ -1,8 +1,4 @@
 NAME = inception
-SECRETS_DIR := $(HOME)/.inception_secrets
-SECRET_FILES := db_root_password.txt db_password.txt wp_admin_password.txt wp_user_password.txt
-
-# Default target
 .DEFAULT_GOAL := up
 
 # Colors
@@ -12,25 +8,6 @@ COLOR_GREEN   := \033[32m
 COLOR_YELLOW  := \033[33m
 COLOR_MAGENTA := \033[35m
 COLOR_CYAN    := \033[36m
-
-# Create secret files
-secrets:
-	@printf "$(COLOR_CYAN)🔐 Setting up secrets...$(COLOR_RESET)\n"
-	@mkdir -p $(SECRETS_DIR)
-	@chmod 700 $(SECRETS_DIR)
-	@for file in $(SECRET_FILES); do \
-		if [ ! -f "$(SECRETS_DIR)/$$file" ]; then \
-			printf "$(COLOR_YELLOW)Creating secret file $$file...$(COLOR_RESET)\n"; \
-			printf "   Enter password for $$file: "; \
-			stty -echo; read pass; stty echo; echo; \
-			echo "$$pass" > "$(SECRETS_DIR)/$$file"; \
-			chmod 600 "$(SECRETS_DIR)/$$file"; \
-			printf "$(COLOR_GREEN)   ✓ Created $(SECRETS_DIR)/$$file$(COLOR_RESET)\n"; \
-		else \
-			printf "$(COLOR_GREEN)   ✓ Secret file $(SECRETS_DIR)/$$file already exists.$(COLOR_RESET)\n"; \
-		fi; \
-	done
-	@printf "$(COLOR_GREEN)✓ All secrets ready.$(COLOR_RESET)\n"
 
 # Build images
 build:
@@ -44,7 +21,7 @@ build:
 	fi
 
 # Start stack
-up: secrets build
+up: build
 	@printf "$(COLOR_CYAN)🚀 Starting the stack...$(COLOR_RESET)\n"
 	@mkdir -p /home/atambo/data/mariadb /home/atambo/data/wordpress
 	@docker compose -f srcs/docker-compose.yml up -d
@@ -90,7 +67,7 @@ fclean: clean
 	@printf "$(COLOR_CYAN)🗑️  Cleaning host data directories...$(COLOR_RESET)\n"
 	@docker run --rm -v /home/atambo/data:/data alpine:3.19 sh -c "rm -rf /data/mariadb /data/wordpress && mkdir -p /data/mariadb /data/wordpress"
 	@printf "$(COLOR_CYAN)🔐 Removing local secret files...$(COLOR_RESET)\n"
-	@rm -rf $(SECRETS_DIR)
+	@rm -rf $(HOME)/.inception_secrets
 	@printf "$(COLOR_GREEN)✓ Full cleanup complete.$(COLOR_RESET)\n"
 	@docker rmi -f alpine:3.19 2>/dev/null || true
 
@@ -114,4 +91,4 @@ logs:
 	@printf "$(COLOR_CYAN)📜 Following logs (Ctrl+C to stop)...$(COLOR_RESET)\n"
 	@docker compose -f srcs/docker-compose.yml logs -f
 
-.PHONY: secrets build up down clean fclean re status logs
+.PHONY: build up down clean fclean re status logs
