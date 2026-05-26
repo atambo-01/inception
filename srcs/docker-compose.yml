@@ -1,5 +1,6 @@
 services:
   mariadb:
+    pull_policy: never
     env_file: .env
     environment:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
@@ -25,6 +26,7 @@ services:
       retries: 5
 
   wordpress:
+    pull_policy: never
     env_file: .env
     environment:
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
@@ -50,6 +52,7 @@ services:
       - inception
 
   nginx:
+    pull_policy: never
     env_file: .env
     build:
       context: ./requirements/nginx
