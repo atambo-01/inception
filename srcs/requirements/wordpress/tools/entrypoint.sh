@@ -39,7 +39,7 @@ if [ ! -f "wp-config.php" ]; then
 
     echo "Installing WordPress..."
     wp core install \
-        --url="${DOMAIN_NAME}" \
+        --url="${DOMAIN_NAME}:${PORT}" \
         --title="atambo inception" \
         --admin_user="${WP_ADMIN_USER}" \
         --admin_password="${WP_ADMIN_PASSWORD}" \

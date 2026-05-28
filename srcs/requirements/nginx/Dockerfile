@@ -12,8 +12,10 @@ RUN mkdir -p /run/nginx /etc/nginx/ssl && \
         -out /etc/nginx/ssl/nginx.crt \
         -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=atambo.42.fr"
 
-COPY conf/nginx.conf /etc/nginx/http.d/default.conf
+COPY conf/nginx.conf.template /etc/nginx/templates/nginx.conf.template
+COPY tools/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-EXPOSE 443
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["exec nginx -g 'daemon off"]
