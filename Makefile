@@ -66,13 +66,11 @@ fclean: clean
 	fi
 	@printf "$(COLOR_CYAN)🗑️  Cleaning host data directories...$(COLOR_RESET)\n"
 	@docker run --rm -v /home/atambo/data:/data alpine:3.22 sh -c "rm -rf /data/mariadb /data/wordpress && mkdir -p /data/mariadb /data/wordpress"
-	@printf "$(COLOR_CYAN)🔐 Removing local secret files...$(COLOR_RESET)\n"
-	@rm -rf $(HOME)/.inception_secrets
 	@printf "$(COLOR_GREEN)✓ Full cleanup complete.$(COLOR_RESET)\n"
 	@docker rmi -f alpine:3.22 2>/dev/null || true
 
 # Rebuild from scratch
-re: fclean up
+re: fclean build
 
 # Status
 status:
