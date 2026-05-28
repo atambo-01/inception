@@ -1,6 +1,12 @@
 #!/bin/sh
 set -eu
 
+if [ "${PORT}" != "443" ]; then
+    WP_URL="${DOMAIN_NAME}:${PORT}"
+else
+    WP_URL="${DOMAIN_NAME}"
+fi
+
 # Read secrets if _FILE variables are set
 if [ -n "${WORDPRESS_DB_PASSWORD_FILE:-}" ] && [ -f "$WORDPRESS_DB_PASSWORD_FILE" ]; then
     export MYSQL_PASSWORD=$(cat "$WORDPRESS_DB_PASSWORD_FILE")
@@ -39,7 +45,7 @@ if [ ! -f "wp-config.php" ]; then
 
     echo "Installing WordPress..."
     wp core install \
-        --url="${DOMAIN_NAME}:${PORT}" \
+        --url="${WP_URL}" \
         --title="atambo inception" \
         --admin_user="${WP_ADMIN_USER}" \
         --admin_password="${WP_ADMIN_PASSWORD}" \
