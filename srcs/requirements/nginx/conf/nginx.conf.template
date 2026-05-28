@@ -1,7 +1,7 @@
 server {
     listen ${PORT} ssl;
     listen [::]:${PORT} ssl;
-    server_name atambo.42.fr;
+    server_name ${DOMAIN_NAME};
 
     root /var/www/wordpress;
     index index.php index.html index.htm;

@@ -1,3 +1,7 @@
+DOMAIN_NAME := $(shell grep -E '^DOMAIN_NAME=' srcs/.env | cut -d '=' -f2- | sed 's/^ *//;s/ *$$//')
+PORT := $(or $(shell grep -E '^PORT=' srcs/.env | cut -d '=' -f2- | sed 's/^ *//;s/ *$$//'),443)
+
+
 NAME = inception
 .DEFAULT_GOAL := build
 
@@ -45,7 +49,6 @@ down:
 		printf "$(COLOR_RED)✗ Stop failed.$(COLOR_RESET)\n"; \
 	fi
 
-# Clean (remove Docker volumes)
 clean: down
 	@printf "$(COLOR_CYAN)🧹 Removing Docker volumes...$(COLOR_RESET)\n"
 	@docker compose -f srcs/docker-compose.yml down -v
@@ -54,20 +57,13 @@ clean: down
 	else \
 		printf "$(COLOR_RED)✗ Volume removal failed.$(COLOR_RESET)\n"; \
 	fi
-
-# Full cleanup
-fclean: clean
-	@printf "$(COLOR_CYAN)🔥 Performing full system cleanup...$(COLOR_RESET)\n"
-	@docker system prune -a --volumes --force
-	@if [ $$? -eq 0 ]; then \
-		printf "$(COLOR_GREEN)✓ System pruned.$(COLOR_RESET)\n"; \
-	else \
-		printf "$(COLOR_RED)✗ Prune failed.$(COLOR_RESET)\n"; \
-	fi
 	@printf "$(COLOR_CYAN)🗑️  Cleaning host data directories...$(COLOR_RESET)\n"
 	@docker run --rm -v /home/atambo/data:/data alpine:3.22 sh -c "rm -rf /data/mariadb /data/wordpress && mkdir -p /data/mariadb /data/wordpress"
+
+fclean: clean
+	@printf "$(COLOR_CYAN)🔥 Removing custom images...$(COLOR_RESET)\n"
+	@docker rmi -f nginx:1.0 wordpress:1.0 mariadb:1.0 2>/dev/null || true
 	@printf "$(COLOR_GREEN)✓ Full cleanup complete.$(COLOR_RESET)\n"
-	@docker rmi -f alpine:3.22 2>/dev/null || true
 
 # Rebuild from scratch
 re: fclean build
@@ -79,7 +75,7 @@ status:
 	@docker compose -f srcs/docker-compose.yml ps
 	@echo
 	@if docker compose -f srcs/docker-compose.yml ps --quiet 2>/dev/null | grep -q .; then \
-		printf "$(COLOR_GREEN)🌟 All containers are running! Visit https://atambo.42.fr$(COLOR_RESET)\n"; \
+		printf "$(COLOR_GREEN)🌟 All containers are running! Visit https://$(DOMAIN_NAME):$(PORT)$(COLOR_RESET)\n"; \
 	else \
 		printf "$(COLOR_YELLOW)No containers running. Run 'make up'.$(COLOR_RESET)\n"; \
 	fi
@@ -88,5 +84,14 @@ status:
 logs:
 	@printf "$(COLOR_CYAN)📜 Following logs (Ctrl+C to stop)...$(COLOR_RESET)\n"
 	@docker compose -f srcs/docker-compose.yml logs -f
+
+# Remove Alpine base image (not normally needed, but provided for full cleanup)
+purge: fclean
+	@printf "$(COLOR_CYAN)🔐 Removing local secret files...$(COLOR_RESET)\n"
+	@rm -rf $(HOME)/.inception_secrets
+	@printf "$(COLOR_CYAN)🗑️  Removing Alpine base image...$(COLOR_RESET)\n"
+	@docker rmi -f alpine:3.22 2>/dev/null || true
+	@printf "$(COLOR_GREEN)✓ Alpine image removed (if it was present).$(COLOR_RESET)\n"
+
 
 .PHONY: build up down clean fclean re status logs

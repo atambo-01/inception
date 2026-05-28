@@ -5,9 +5,11 @@
 PROJECT_CONTEXT.md
  *PROJECT_CONTEXT.md
 
-# 0. Costum extension .ign
+# 0. Costum extension .ign and specific files
 .ign
 *.ign
+script/
+script/*
 
 # 1. Critical Security (NEVER commit secrets)
 .env
