@@ -93,5 +93,17 @@ xclean: fclean
 	@docker rmi -f alpine:3.22 2>/dev/null || true
 	@printf "$(COLOR_GREEN)✓ Alpine image removed (if it was present).$(COLOR_RESET)\n"
 
+# Open project in a new private browser window
+open:
+	@if command -v google-chrome >/dev/null 2>&1; then \
+		google-chrome --incognito "https://$(DOMAIN_NAME):$(NGINXPORT)"; \
+	elif command -v firefox >/dev/null 2>&1; then \
+		firefox --private-window "https://$(DOMAIN_NAME):$(NGINXPORT)"; \
+	elif command -v chromium-browser >/dev/null 2>&1; then \
+		chromium-browser --incognito "https://$(DOMAIN_NAME):$(NGINXPORT)"; \
+	else \
+		echo "No supported browser found."; exit 1; \
+	fi
+
 
 .PHONY: build up down clean fclean re status logs
