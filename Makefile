@@ -1,5 +1,5 @@
 DOMAIN_NAME := $(shell grep -E '^DOMAIN_NAME=' srcs/.env | cut -d '=' -f2- | sed 's/^ *//;s/ *$$//')
-PORT := $(or $(shell grep -E '^PORT=' srcs/.env | cut -d '=' -f2- | sed 's/^ *//;s/ *$$//'),443)
+NGINX_PORT := $(or $(shell grep -E '^NGINX_PORT=' srcs/.env | cut -d '=' -f2- | sed 's/^ *//;s/ *$$//'),443)
 
 
 NAME = inception
@@ -75,7 +75,7 @@ status:
 	@docker compose -f srcs/docker-compose.yml ps
 	@echo
 	@if docker compose -f srcs/docker-compose.yml ps --quiet 2>/dev/null | grep -q .; then \
-		printf "$(COLOR_GREEN)🌟 All containers are running! Visit https://$(DOMAIN_NAME):$(PORT)$(COLOR_RESET)\n"; \
+		printf "$(COLOR_GREEN)🌟 All containers are running! Visit https://$(DOMAIN_NAME):$(NGINX_PORT)$(COLOR_RESET)\n"; \
 	else \
 		printf "$(COLOR_YELLOW)No containers running. Run 'make up'.$(COLOR_RESET)\n"; \
 	fi
@@ -86,7 +86,7 @@ logs:
 	@docker compose -f srcs/docker-compose.yml logs -f
 
 # Remove Alpine base image (not normally needed, but provided for full cleanup)
-purge: fclean
+xclean: fclean
 	@printf "$(COLOR_CYAN)🔐 Removing local secret files...$(COLOR_RESET)\n"
 	@rm -rf $(HOME)/.inception_secrets
 	@printf "$(COLOR_CYAN)🗑️  Removing Alpine base image...$(COLOR_RESET)\n"

@@ -1,13 +1,13 @@
 #!/bin/sh
 set -eu
 
-if [ "${PORT}" != "443" ]; then
-    WP_URL="${DOMAIN_NAME}:${PORT}"
+if [ "${NGINX_PORT}" != "443" ]; then
+    WP_URL="${DOMAIN_NAME}:${NGINX_PORT}"
 else
     WP_URL="${DOMAIN_NAME}"
 fi
 
-# Read secrets if _FILE variables are set
+# Read secrets (unchanged)
 if [ -n "${WORDPRESS_DB_PASSWORD_FILE:-}" ] && [ -f "$WORDPRESS_DB_PASSWORD_FILE" ]; then
     export MYSQL_PASSWORD=$(cat "$WORDPRESS_DB_PASSWORD_FILE")
 fi
@@ -18,10 +18,12 @@ if [ -n "${WP_USER_PASSWORD_FILE:-}" ] && [ -f "$WP_USER_PASSWORD_FILE" ]; then
     export WP_USER_PASSWORD=$(cat "$WP_USER_PASSWORD_FILE")
 fi
 
-# Wait for MariaDB to be ready
-# We use mariadb-client to check the connection
+# Default MariaDB port to 3306 if not set
+DB_PORT="${DB_PORT:-3306}"
+
+# Wait for MariaDB to be ready (use -P for port)
 count=0
-until mysqladmin ping -h mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent; do
+until mysqladmin ping -h mariadb -P "${DB_PORT}" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent; do
     count=$((count+1))
     if [ $count -gt 5 ]; then
         echo "Error: Could not connect to MariaDB after 5 attempts."
@@ -33,14 +35,14 @@ done
 
 if [ ! -f "wp-config.php" ]; then
     echo "Downloading WordPress..."
-    wp core download --allow-root --force   # --force overwrites existing files
+    wp core download --allow-root --force
 
     echo "Creating wp-config.php..."
     wp config create \
         --dbname="${MYSQL_DATABASE}" \
         --dbuser="${MYSQL_USER}" \
         --dbpass="${MYSQL_PASSWORD}" \
-        --dbhost="mariadb" \
+        --dbhost="mariadb:${DB_PORT}" \
         --allow-root
 
     echo "Installing WordPress..."

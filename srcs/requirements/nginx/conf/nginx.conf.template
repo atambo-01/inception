@@ -1,6 +1,6 @@
 server {
-    listen ${PORT} ssl;
-    listen [::]:${PORT} ssl;
+    listen ${NGINX_PORT} ssl;
+    listen [::]:${NGINX_PORT} ssl;
     server_name ${DOMAIN_NAME};
 
     root /var/www/wordpress;

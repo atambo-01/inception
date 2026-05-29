@@ -24,11 +24,14 @@ MYSQL_DATABASE="$MARIADB_DATABASE"
 MYSQL_USER="$MARIADB_USER"
 MYSQL_PASSWORD="$MARIADB_PASSWORD"
 
-mkdir -p /run/mysqld /var/lib/mysql
-chown -R mysql:mysql /run/mysqld /var/lib/mysql
+mkdir -p /run/mariadb /var/lib/mysql
+chown -R mysql:mysql /run/mariadb /var/lib/mysql
 
 if [ ! -d /var/lib/mysql/mysql ]; then
         mariadb-install-db --user=mysql --datadir=/var/lib/mysql --skip-test-db >/dev/null
+
+envsubst '${DB_PORT}' < /etc/mariadb/templates/mariadb-server.cnf.template > /etc/my.cnf.d/mariadb-server.cnf
+
 
 mariadbd --user=mysql --bootstrap <<EOF
 FLUSH PRIVILEGES;

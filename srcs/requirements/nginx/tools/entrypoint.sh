@@ -11,6 +11,8 @@ if [ ! -f "/etc/nginx/ssl/nginx.crt" ]; then
         -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=${DOMAIN_NAME}"
 fi
 
-envsubst '${PORT} ${DOMAIN_NAME}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/http.d/default.conf
+envsubst '${NGINX_PORT} ${DOMAIN_NAME}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/http.d/default.conf
 
 exec nginx -g 'daemon off;'
+
+

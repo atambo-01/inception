@@ -17,6 +17,8 @@ services:
       - db_password
     volumes:
       - mariadb_data:/var/lib/mysql
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
     networks:
       - inception
     healthcheck:
@@ -62,7 +64,7 @@ services:
     container_name: nginx
     restart: unless-stopped
     ports:
-      - "${PORT}:${PORT}"
+      - "${NGINX_PORT}:${NGINX_PORT}"
     depends_on:
       - wordpress
     volumes:
