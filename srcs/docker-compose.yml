@@ -22,7 +22,7 @@ services:
     networks:
       - inception
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u wordpress -p$$(cat /run/secrets/db_password)"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost --socket=/run/mariadb/mariadb.sock -u wordpress -p$$(cat /run/secrets/db_password)"]
       interval: 5s
       timeout: 3s
       retries: 5

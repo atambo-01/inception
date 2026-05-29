@@ -15,4 +15,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 EXPOSE ${DB_PORT}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["mariadbd", "--user=mysql"]
+CMD ["mariadbd", "--user=mysql", "--socket=/run/mariadb/mariadb.sock"]
