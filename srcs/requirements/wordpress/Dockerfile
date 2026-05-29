@@ -25,7 +25,7 @@ RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.ph
     chmod +x /usr/local/bin/wp
 
 # Configure PHP-FPM for container networking and non-root execution
-RUN sed -i 's/^listen = .*/listen = 9000/' /etc/php83/php-fpm.d/www.conf && \
+RUN sed -i 's/^listen = .*/listen = ${WP_PORT}/' /etc/php83/php-fpm.d/www.conf && \
     sed -i 's|;error_log = log/php83/error.log|error_log = /proc/self/fd/2|g' /etc/php83/php-fpm.conf
 
 # Set up the working directory for WordPress

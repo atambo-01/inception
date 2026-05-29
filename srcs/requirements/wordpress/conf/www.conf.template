@@ -2,7 +2,7 @@
 user = nobody
 group = nobody
 
-listen = __WP_PORT__
+listen = ${WP_PORT}
 listen.backlog = 511
 listen.allowed_clients = 127.0.0.1
 
