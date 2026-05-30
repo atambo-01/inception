@@ -80,11 +80,6 @@ status:
 		printf "$(COLOR_YELLOW)No containers running. Run 'make up'.$(COLOR_RESET)\n"; \
 	fi
 
-# Logs
-logs:
-	@printf "$(COLOR_CYAN)📜 Following logs (Ctrl+C to stop)...$(COLOR_RESET)\n"
-	@docker compose -f srcs/docker-compose.yml logs -f
-
 # Remove Alpine base image (not normally needed, but provided for full cleanup)
 xclean: fclean
 	@printf "$(COLOR_CYAN)🔐 Removing local secret files...$(COLOR_RESET)\n"

@@ -79,14 +79,14 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /home/atambo/data/mariadb
+      device: ${HOME}/data/mariadb
   wordpress_data:
     name: wordpress_data
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/atambo/data/wordpress
+      device: ${HOME}/data/wordpress
 
 networks:
   inception:
