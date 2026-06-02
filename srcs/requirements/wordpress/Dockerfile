@@ -35,9 +35,6 @@ WORKDIR /var/www/wordpress
 COPY tools/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Port 9000 is the standard for PHP-FPM
-EXPOSE ${WP_PORT}
-
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Start php-fpm in the foreground (-F)

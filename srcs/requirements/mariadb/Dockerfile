@@ -12,7 +12,5 @@ COPY conf/mariadb-server.cnf.template /etc/mariadb/templates/mariadb-server.cnf.
 COPY tools/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-EXPOSE ${DB_PORT}
-
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["mariadbd", "--user=mysql", "--socket=/run/mariadb/mariadb.sock"]
