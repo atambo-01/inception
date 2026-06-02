@@ -87,10 +87,11 @@ xclean: fclean
 	@printf "$(COLOR_CYAN)🗑️  Removing Alpine base image...$(COLOR_RESET)\n"
 	@docker rmi -f alpine:3.22 2>/dev/null || true
 	@printf "$(COLOR_GREEN)✓ Alpine image removed (if it was present).$(COLOR_RESET)\n"
+	@docker system prune -a -f
 
 # Open project in a new private browser window
 open:
-	@sleep 5
+	@sleep 3
 	@if command -v google-chrome >/dev/null 2>&1; then \
 		google-chrome --incognito "https://$(DOMAIN_NAME):$(NGINX_PORT)"; \
 	elif command -v firefox >/dev/null 2>&1; then \
