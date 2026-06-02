@@ -1,7 +1,7 @@
 ARG ALPINE_VERSION=3.22
 FROM alpine:${ALPINE_VERSION}
 
-# Install dependencies
+# Install dependencies (including gettext for envsubst)
 RUN apk update && apk upgrade && apk add --no-cache \
     php83 \
     php83-fpm \
@@ -14,28 +14,27 @@ RUN apk update && apk upgrade && apk add --no-cache \
     php83-xml \
     php83-zip \
     wget \
-    mariadb-client && \
+    mariadb-client \
+    gettext && \
     ln -sf /usr/bin/php83 /usr/bin/php && \
     mkdir -p /etc/php83/conf.d && \
     echo "memory_limit=256M" > /etc/php83/conf.d/memory-limit.ini
 
-# Download and install WP-CLI (essential for automated setup)
+# Download and install WP-CLI
 RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
     -O /usr/local/bin/wp && \
     chmod +x /usr/local/bin/wp
 
-# Configure PHP-FPM for container networking and non-root execution
-RUN sed -i 's/^listen = .*/listen = ${WP_PORT}/' /etc/php83/php-fpm.d/www.conf && \
-    sed -i 's|;error_log = log/php83/error.log|error_log = /proc/self/fd/2|g' /etc/php83/php-fpm.conf
+# Remove the default PHP-FPM config (we'll generate it at runtime)
+RUN rm -f /etc/php83/php-fpm.d/www.conf
 
-# Set up the working directory for WordPress
+# Copy the template (without listen.allowed_clients)
+COPY conf/www.conf.template /etc/php83/php-fpm.d/www.conf.template
+
 WORKDIR /var/www/wordpress
 
-# Copy entrypoint script
 COPY tools/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-# Start php-fpm in the foreground (-F)
 CMD ["php-fpm83", "-F"]

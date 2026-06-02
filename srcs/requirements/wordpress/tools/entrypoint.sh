@@ -18,6 +18,10 @@ if [ -n "${WP_USER_PASSWORD_FILE:-}" ] && [ -f "$WP_USER_PASSWORD_FILE" ]; then
     export WP_USER_PASSWORD=$(cat "$WP_USER_PASSWORD_FILE")
 fi
 
+# Generate PHP-FPM config from template
+WP_PORT="${WP_PORT:-9000}"
+envsubst '${WP_PORT}' < /etc/php83/php-fpm.d/www.conf.template > /etc/php83/php-fpm.d/www.conf
+
 # Default MariaDB port to 3306 if not set
 DB_PORT="${DB_PORT:-3306}"
 
