@@ -17,8 +17,6 @@ services:
       - db_password
     volumes:
       - mariadb_data:/var/lib/mysql
-    ports:
-      - "${DB_PORT}:${DB_PORT}"
     networks:
       - inception
     healthcheck:
@@ -43,7 +41,7 @@ services:
     restart: unless-stopped
     depends_on:
       mariadb:
-        condition: service_healthy   # optional, but safe
+        condition: service_healthy
     secrets:
       - db_password
       - wp_admin_password
@@ -90,6 +88,7 @@ volumes:
 
 networks:
   inception:
+    name: inception
     driver: bridge
 
 secrets:
