@@ -27,13 +27,14 @@ MYSQL_PASSWORD="$MARIADB_PASSWORD"
 mkdir -p /run/mariadb /var/lib/mysql
 chown -R mysql:mysql /run/mariadb /var/lib/mysql
 
-if [ ! -d /var/lib/mysql/mysql ]; then
-        mariadb-install-db --user=mysql --datadir=/var/lib/mysql --skip-test-db >/dev/null
 
 envsubst '${DB_PORT}' < /etc/mariadb/templates/mariadb-server.cnf.template > /etc/my.cnf.d/mariadb-server.cnf
 
 
-mariadbd --user=mysql --bootstrap <<EOF
+if [ ! -d /var/lib/mysql/mysql ]; then
+    mariadb-install-db --user=mysql --datadir=/var/lib/mysql --skip-test-db >/dev/null
+
+    mariadbd --user=mysql --bootstrap <<EOF
 FLUSH PRIVILEGES;
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
@@ -41,7 +42,6 @@ CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
 GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
 FLUSH PRIVILEGES;
 EOF
-
 fi
 
 exec "$@"
